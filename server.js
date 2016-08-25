@@ -2,7 +2,7 @@ var restify     =   require('restify');
 var mongojs     =   require('mongojs');
 var morgan  	=   require('morgan');
 //var db          =   mongojs('bucketlistapp', ['appUsers','bucketLists']);
-var db = mongojs('mongodb://obione:obione94310@ds013956.mlab.com:13956/auth', ['auth']);
+var db = mongojs('mongodb://obione:obione94310@ds013956.mlab.com:13956/auth', ['auth','user','bucketLists','placetobe']);
 
 var server      =   restify.createServer();
  
@@ -16,6 +16,7 @@ server.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', "*");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
+    res.header('Token', 'init');
     next();
 });
  

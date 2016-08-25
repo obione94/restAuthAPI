@@ -19,3 +19,18 @@ module.exports.comparePassword = function (password, userPassword, callback) {
         return callback(null, isPasswordMatch);
     });
 };
+
+
+module.exports.genereToken = function (callback) {
+    d = new Date();
+    salttoken = d.getMilliseconds().toString();
+    bcrypt.genSalt(10, function (err, salt) {
+        if (err)
+            return callback(err);
+ 
+        bcrypt.hash(salttoken, salt, function (err, hash) {
+            return callback(err, hash);
+        });
+ 
+    });
+};

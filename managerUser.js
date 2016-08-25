@@ -2,18 +2,18 @@ var pwdMgr = require('./managePasswords');
  
 module.exports = function (server, db) {
     // unique index
-    db.auth.ensureIndex({
+    db.user.ensureIndex({
         email: 1
     }, {
         unique: true
     })
  
-    server.post('/api/v1/bucketList/auth/register', function (req, res, next) {
+    server.post('/api/v1/bucketList/user/register', function (req, res, next) {
         var user = req.params;
         pwdMgr.cryptPassword(user.password, function (err, hash) {
             user.password = hash;
             console.log("n", hash);
-            db.auth.insert(user,
+            db.user.insert(user,
                 function (err, dbUser) {
                     if (err) { // duplicate key error
                         if (err.code == 11000) /* http://www.mongodb.org/about/contributors/error-codes/*/ {
@@ -37,42 +37,75 @@ module.exports = function (server, db) {
         return next();
     });
  
-    server.post('/api/v1/bucketList/auth/login', function (req, res, next) {
-        var user = req.params;
-        if (user.email.trim().length == 0 || user.password.trim().length == 0) {
-            res.writeHead(403, {
-                'Content-Type': 'application/json; charset=utf-8'
-            });
-            res.end(JSON.stringify({
-                error: "Invalid Credentials"
-            }));
-        }
-        console.log("in");
-        db.auth.findOne({
-            email: req.params.email
-        }, function (err, dbUser) {
- 
- 
-            pwdMgr.comparePassword(user.password, dbUser.password, function (err, isPasswordMatch) {
- 
-                if (isPasswordMatch) {
-                    res.writeHead(200, {
-                        'Content-Type': 'application/json; charset=utf-8'
-                    });
-                    // remove password hash before sending to the client
-                    dbUser.password = "";
-                    res.end(JSON.stringify(dbUser));
-                } else {
-                    res.writeHead(403, {
-                        'Content-Type': 'application/json; charset=utf-8'
-                    });
-                    res.end(JSON.stringify({
-                        error: "Invalid User"
-                    }));
-                }
- 
-            });
+    server.post('/api/v1/bucketList/user/login', function (req, res, next) {
+
+        pwdMgr.genereToken(function (err, hash) {
+            if (hash) {
+                db.auth.insert({
+                    token: hash
+                }, function (err, auth) {
+                    if(auth){                        
+                        var user = req.params;
+                        if (user.email.trim().length == 0 || user.password.trim().length == 0) {
+                            res.writeHead(403, {
+                                'Content-Type': 'application/json; charset=utf-8'
+                            });
+                            res.end(JSON.stringify({
+                                error: "Invalid Credentials"
+                            }));
+                        }
+                        console.log("in");
+                        db.user.findOne({
+                            email: user.email
+                        }, function (err, dbUser) {
+                                 console.log(dbUser);
+
+                            pwdMgr.comparePassword(user.password, dbUser.password, function (err, isPasswordMatch) {
+                 
+                                if (isPasswordMatch) {
+                                    res.writeHead(200, {
+                                        'Content-Type': 'application/json; charset=utf-8',
+                                        'Token': hash
+                                    });
+                                    // remove password hash before sending to the client
+                                    dbUser.password = "";
+                                    res.end(JSON.stringify(dbUser));
+                                } else {
+                                    res.writeHead(403, {
+                                        'Content-Type': 'application/json; charset=utf-8'
+                                    });
+                                    res.end(JSON.stringify({
+                                        error: "Invalid User"
+                                    }));
+                                }
+                 
+                            });
+                        });
+                    }else{
+                        res.writeHead(403, {
+                            'Content-Type': 'application/json; charset=utf-8'
+                        });
+                        res.end(JSON.stringify({
+                            error: "can't insert token"
+                        }));
+
+                    }
+
+                });
+
+            }else{
+
+                res.writeHead(403, {
+                    'Content-Type': 'application/json; charset=utf-8'
+                });
+                res.end(JSON.stringify({
+                    error: "Invalid token"
+                }));
+            }
         });
+
+
         return next();
     });
+
 };
