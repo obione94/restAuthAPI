@@ -3,15 +3,18 @@ var validateRequest = require("./validateRequest");
 
 	server.get("/api/v1/bucketList/data/list", function (req, res, next) {
 		validateRequest.validateToken(req, res, db, function (newauth) {
-			db.bucketLists.find({
-				token : req.params.email
-			},function (err, list) {
-				res.writeHead(200, {
-					'Content-Type': 'application/json; charset=utf-8',
-					'Token':newauth.token
+			if(newauth){
+
+				db.bucketLists.find({
+					token : req.params.email
+				},function (err, list) {
+					res.writeHead(200, {
+						'Content-Type': 'application/json; charset=utf-8',
+						'Token':newauth.token
+					});
+					res.end(JSON.stringify(list));
 				});
-				res.end(JSON.stringify(list));
-			});
+			}
 		});
 		return next();
 	});

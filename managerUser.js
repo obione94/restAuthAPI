@@ -58,28 +58,39 @@ module.exports = function (server, db) {
                         db.user.findOne({
                             email: user.email
                         }, function (err, dbUser) {
-                                 console.log(dbUser);
+                            if(dbUser){
 
-                            pwdMgr.comparePassword(user.password, dbUser.password, function (err, isPasswordMatch) {
-                 
-                                if (isPasswordMatch) {
-                                    res.writeHead(200, {
-                                        'Content-Type': 'application/json; charset=utf-8',
-                                        'Token': hash
-                                    });
-                                    // remove password hash before sending to the client
-                                    dbUser.password = "";
-                                    res.end(JSON.stringify(dbUser));
-                                } else {
-                                    res.writeHead(403, {
-                                        'Content-Type': 'application/json; charset=utf-8'
-                                    });
-                                    res.end(JSON.stringify({
-                                        error: "Invalid User"
-                                    }));
-                                }
-                 
-                            });
+                                console.log(dbUser);
+                                pwdMgr.comparePassword(user.password, dbUser.password, function (err, isPasswordMatch) {
+                     
+                                    if (isPasswordMatch) {
+                                        res.writeHead(200, {
+                                            'Content-Type': 'application/json; charset=utf-8',
+                                            'Token': hash
+                                        });
+                                        // remove password hash before sending to the client
+                                        dbUser.password = "";
+                                        res.end(JSON.stringify(dbUser));
+                                    } else {
+                                        res.writeHead(403, {
+                                            'Content-Type': 'application/json; charset=utf-8'
+                                        });
+                                        res.end(JSON.stringify({
+                                            error: "Invalid User"
+                                        }));
+                                    }
+                     
+                                });
+                                
+                            }else{
+                                res.writeHead(403, {
+                                    'Content-Type': 'application/json; charset=utf-8'
+                                });
+                                res.end(JSON.stringify({
+                                    error: "can't find "+user.email
+                                }));
+
+                            }
                         });
                     }else{
                         res.writeHead(403, {
